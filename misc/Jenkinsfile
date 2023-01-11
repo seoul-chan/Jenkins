@@ -1,0 +1,26 @@
+node {  // 모든 노드에서 실행 가능
+   
+   def commit_id // 파이프라인에서 커밋 아이디를 노출하지 않기에 커밋ID를 알아내야 하
+
+   stage('Preparation') {
+     checkout scm // 깃허브 복제를 수행(클론), 프로젝트 구축을 시작할 수 있음 
+     // 클론한 코드를 이용해 쉘커맨드 수행
+     // git rev-parse --short HEAD : 커밋 아이디를 알아냄
+     // > .git/commit-id : 알아낸 커밋 아이디로 .git/commit-id 파일을 생성 (커밋 ID를 저장할 임시 파일)
+     sh "git rev-parse --short HEAD > .git/commit-id" 
+     commit_id = readFile('.git/commit-id').trim()  // 임시 파일을 읽어 커밋ID 값을 변수에 저장
+   }
+   stage('test') {
+     nodejs(nodeJSInstallationName: 'nodejs') { //npm을 수행할 수 있도록 nodejs를 복제 (젠킨스에 설치되어 있음)
+       sh 'npm install --only=dev'  //dev 패키지(mocha)만 install (package.json에 정의되어 있음)
+       sh 'npm test'  // package.json에 정의된 script - test를 테스트 (여기선 mocha 테스트)
+     }
+   }
+   stage('docker build/push') {
+    //withRegistry[작성한 URL에 도커 이미지를 등록(도커허브), Credentials ID]
+    //docker.build[태그정보,빌드할이미지경로]
+     docker.withRegistry('https://hub.docker.com/repository/docker/kkchan9210/docker-nodejs-demo', 'dockerhub') {
+       def app = docker.build("kkchan/docker-nodejs-demo:${commit_id}", '.').push()
+     }
+   }
+}
