@@ -20,7 +20,7 @@ node {  // 모든 노드에서 실행 가능
     //withRegistry[작성한 URL에 도커 이미지를 등록(도커허브), Credentials ID]
     //docker.build[태그정보,빌드할이미지경로]
      docker.withRegistry('https://index.docker.io/v2/', 'dockerhub') {
-       def app = docker.build("kkchan/docker-nodejs-demo:${commit_id}", '.').push()
+       def app = docker.build("kkchan9210/docker-nodejs-demo:${commit_id}", '.').push()
      }
    }
 }
