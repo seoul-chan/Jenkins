@@ -11,14 +11,14 @@ node {  // 모든 노드에서 실행 가능
      commit_id = readFile('.git/commit-id').trim()  // 임시 파일을 읽어 커밋ID 값을 변수에 저장
    }
    stage('test') {
-     nodejs(nodeJSInstallationName: 'nodejs') { //npm을 수행할 수 있도록 nodejs를 복제 (젠킨스에 설치되어 있음)
+     nodejs(nodeJSInstallationName: 'nodejs') { //npm을 수행할 수 있도록 nodejs를 복제 (젠킨스에 플러그인 설치되어 있음)
        sh 'npm install --only=dev'  //dev 패키지(mocha)만 install (package.json에 정의되어 있음)
        sh 'npm test'  // package.json에 정의된 script - test를 테스트 (여기선 mocha 테스트)
      }
    }
    stage('docker build/push') {
-    //withRegistry[작성한 URL에 도커 이미지를 등록(도커허브), Credentials ID]
-    //docker.build[태그정보,빌드할이미지경로]
+    //withRegistry[로그인 할 도커 허브 주소(주소는 고정), Credentials ID]
+    //docker.build[docker.hub.repo정보:tagname,빌드할이미지경로]
      docker.withRegistry('https://index.docker.io/v2/', 'dockerhub') {
        def app = docker.build("kkchan9210/docker-nodejs-demo:${commit_id}", '.').push()
      }

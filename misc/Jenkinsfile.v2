@@ -1,31 +1,38 @@
 node {
    def commit_id
+
    stage('Preparation') {
      checkout scm
+
      sh "git rev-parse --short HEAD > .git/commit-id"
      commit_id = readFile('.git/commit-id').trim()
    }
    stage('test') {
-     def myTestContainer = docker.image('node:4.6')
-     myTestContainer.pull()
-     myTestContainer.inside {
+     def myTestContainer = docker.image('node:4.6') // myTestContainer에 도커 이미지 node4.6을 대입
+     myTestContainer.pull() // 도커 이미지를 가져옴, 젠킨스가 도커 허브에서 최신 버전을 가져왔는지 확인
+     myTestContainer.inside { // 가져온 컨테이터 이미지 안에서 아래의 명령어를 수행, 젠킨스가 아닌 새로운 컨테이너 내에서 수행
        sh 'npm install --only=dev'
        sh 'npm test'
      }
-   }
+   } // 명령어가 수행되고 나면 생성된 컨테이너는 폐기 후 다음 stage로 넘어감
+
    stage('test with a DB') {
+    // 최신 버전 mysql 이미지 실행 및 환경 변수 설정(e)
+    // MYSQL_ALLOW_EMPTY_PASSWORD=yes -> 해당 mysql은 비빌번호 보호가 적용되지 않음
      def mysql = docker.image('mysql').run("-e MYSQL_ALLOW_EMPTY_PASSWORD=yes") 
-     def myTestContainer = docker.image('node:4.6')
-     myTestContainer.pull()
+     def myTestContainer = docker.image('node:4.6') // 도커 이미지 node4.6을 대입
+     myTestContainer.pull() // 이미지를 가져옴
+     // --link를 사용해 nodejs 컨테이너에 mysql 컨테이너를 연결, host:name
      myTestContainer.inside("--link ${mysql.id}:mysql") { // using linking, mysql will be available at host: mysql, port: 3306
           sh 'npm install --only=dev' 
           sh 'npm test'                     
      }                                   
      mysql.stop()
-   }                                     
+   } // 마찬가지로 stage 완료 시 컨테이너 폐기
+
    stage('docker build/push') {            
      docker.withRegistry('https://index.docker.io/v2/', 'dockerhub') {
-       def app = docker.build("wardviaene/docker-nodejs-demo:${commit_id}", '.').push()
+       def app = docker.build("kkchan9210/docker-nodejs-demo:${commit_id}", '.').push()
      }                                     
    }                                       
 }                                          
