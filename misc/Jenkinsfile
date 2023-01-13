@@ -14,7 +14,7 @@ node {  // 모든 노드에서 실행 가능
      nodejs(nodeJSInstallationName: 'nodejs') { //npm을 수행할 수 있도록 nodejs를 복제 (젠킨스에 플러그인 설치되어 있음)
        sh 'npm install --only=dev'  //dev 패키지(mocha)만 install (package.json에 정의되어 있음)
        sh 'npm test'  // package.json에 정의된 script - test를 테스트 (여기선 mocha 테스트)
-     }
+     }// 모든 명령어가 수행되고 나면서 node.js 컨테이너는 해당 시점에서 제거 됨
    }
    stage('docker build/push') {
     //withRegistry[로그인 할 도커 허브 주소(주소는 고정), Credentials ID]

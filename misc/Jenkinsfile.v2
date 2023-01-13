@@ -13,8 +13,8 @@ node {
      myTestContainer.inside { // 가져온 컨테이터 이미지 안에서 아래의 명령어를 수행, 젠킨스가 아닌 새로운 컨테이너 내에서 수행
        sh 'npm install --only=dev'
        sh 'npm test'
-     }
-   } // 명령어가 수행되고 나면 생성된 컨테이너는 폐기 후 다음 stage로 넘어감
+     }  // 모든 명령어가 수행되고 나면서 node.js 컨테이너는 해당 시점에서 제거 됨
+   }
 
    stage('test with a DB') {
     // 최신 버전 mysql 이미지 실행 및 환경 변수 설정(e)
@@ -25,10 +25,10 @@ node {
      // --link를 사용해 nodejs 컨테이너에 mysql 컨테이너를 연결, host:name
      myTestContainer.inside("--link ${mysql.id}:mysql") { // using linking, mysql will be available at host: mysql, port: 3306
           sh 'npm install --only=dev' 
-          sh 'npm test'                     
-     }                                   
-     mysql.stop()
-   } // 마찬가지로 stage 완료 시 컨테이너 폐기
+          sh 'npm test'
+     } // node.js 컨테이너 제거 시점
+     mysql.stop() // mysql 컨테이너가 중지되고 페기 됨
+   }
 
    stage('docker build/push') {            
      docker.withRegistry('https://index.docker.io/v2/', 'dockerhub') {
